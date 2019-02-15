@@ -1,32 +1,40 @@
 //
-//  MoviesViewController.swift
+//  MovieGridViewController.swift
 //  flixsterSSQ
 //
-//  Created by Samina Qazi on 2/8/19.
+//  Created by Samina Qazi on 2/14/19.
 //  Copyright © 2019 Samina Qazi. All rights reserved.
 //
 
 import UIKit
 import AlamofireImage
 
+class MovieGridViewController: UIViewController, UICollectionViewDataSource, UICollectionViewDelegate {
 
-class MoviesViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+    @IBOutlet weak var collectionView: UICollectionView!
     
+    var movies = [[String:Any]]()
     
-    @IBOutlet weak var tableView: UITableView!
-    
-    var movies = [[String:Any]]()   // dictionary
-
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        tableView.dataSource = self
-        tableView.delegate = self
-        
         // Do any additional setup after loading the view.
-        //print("Hello")
         
-        let url = URL(string: "https://api.themoviedb.org/3/movie/now_playing?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed")!
+        collectionView.delegate = self
+        collectionView.dataSource = self
+        
+        let layout = collectionView.collectionViewLayout as! UICollectionViewFlowLayout
+        
+        layout.minimumLineSpacing = 4
+        layout.minimumInteritemSpacing = 4
+        
+        // view.frame.size.width depends on the device
+        
+        let width = (view.frame.size.width -
+                layout.minimumInteritemSpacing * 2) / 3
+        layout.itemSize = CGSize(width: width, height: width * 3 / 2)
+        
+        let url = URL(string: "https://api.themoviedb.org/3/movie/297762/similar?api_key=a07e22bc18f5cb106bfe4cc1f83ad8ed")!
         let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 10)
         let session = URLSession(configuration: .default, delegate: nil, delegateQueue: OperationQueue.main)
         let task = session.dataTask(with: request) { (data, response, error) in
@@ -38,7 +46,10 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
                 
                 self.movies = dataDictionary["results"] as! [[String:Any]]
                 
-                self.tableView.reloadData()
+                self.collectionView.reloadData()
+                print(self.movies)
+                
+                //self.tableView.reloadData()
                 
                 //print(dataDictionary)
                 
@@ -51,24 +62,14 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
         task.resume()
     }
     
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        //return 50
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return movies.count
     }
     
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        //let cell = UITableViewCell()
-        let cell = tableView.dequeueReusableCell(withIdentifier: "MovieCell") as! MovieCell
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "MovieGridCell", for: indexPath) as! MovieGridCell
         
-        let movie = movies[indexPath.row]
-        let title = movie["title"] as! String
-        let synopsis = movie["overview"] as! String
-        
-        cell.titleLabel.text = title
-        cell.synopsisLabel.text = synopsis
-        
-        //cell.textLabel!.text = title
-        //cell.textLabel?.text = "row: \(indexPath.row)"
+        let movie = movies[indexPath.item]
         
         let baseUrl = "https://image.tmdb.org/t/p/w185"
         let posterPath = movie["poster_path"] as! String
@@ -79,6 +80,8 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
         return cell
     }
     
+
+
     
     // MARK: - Navigation
 
@@ -90,15 +93,15 @@ class MoviesViewController: UIViewController, UITableViewDataSource, UITableView
         print("Loading up the details screen")
         
         // Find the selected movie
-        let cell = sender as! UITableViewCell
-        let indexPath = tableView.indexPath(for: cell)!
-        let movie = movies[indexPath.row]
+        let cell = sender as! UICollectionViewCell
+        let indexPath = collectionView.indexPath(for: cell)!
+        let movie = movies[indexPath.item]
         
         // Pass the selected movie to the details view controller
-        let detailsViewController = segue.destination as! MovieDetailsViewController
-        detailsViewController.movie = movie
+        let details2ViewController = segue.destination as! MovieDetails2ViewController
+        details2ViewController.movie = movie
         
-        tableView.deselectRow(at: indexPath, animated: true)
+        collectionView.deselectItem(at: indexPath, animated: true)
         
     }
     
